@@ -35,19 +35,13 @@
 
 ---
 
-## Wireless (Access Point) Settings
+## Step 1 – Draw the Topology
 
-| Department      | Access Point | SSID    | Password   |
-|-----------------|--------------|---------|------------|
-| IT              | 1            | IT-WIFI | ITpassword |
-| HR              | 2            | HR-WIFI | HRpassword |
-| Customer Service| 3            | CS-WIFI | CSpassword |
+Place all devices and connect them to Switch1. Access point wireless connections are not critical at this stage.
 
-> For each access point: Config → Port 1 → set **WPA2-PSK** → enter SSID and passphrase.
+![InitialTopology](pictures/DeviceConnections.png)
 
----
-
-## Switch Port Assignments
+### Switch Port Assignments
 
 | Device        | Switch Port |
 |---------------|-------------|
@@ -67,15 +61,19 @@
 
 ---
 
-## Step 1 – Draw the Topology
-
-Place all devices and connect them to Switch1. Access point wireless connections are not critical at this stage.
-
----
-
 ## Step 2 – Setup Access Points for WiFi
 
-For each access point: **Config → Port 1 → WPA2-PSK** → set SSID and passphrase (see table above).
+For each access point: **Config → Port 1 → WPA2-PSK** → set SSID and passphrase (see table below).
+
+### Wireless (Access Point) Settings
+
+| Department      | Access Point | SSID    | Password   |
+|-----------------|--------------|---------|------------|
+| IT              | 1            | IT-WIFI | ITpassword |
+| HR              | 2            | HR-WIFI | HRpassword |
+| Customer Service| 3            | CS-WIFI | CSpassword |
+
+> For each access point: Config → Port 1 → set **WPA2-PSK** → enter SSID and passphrase.
 
 ---
 
