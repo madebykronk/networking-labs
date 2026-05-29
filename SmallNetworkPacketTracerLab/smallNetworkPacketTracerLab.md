@@ -39,8 +39,6 @@
 
 Place all devices and connect them to Switch1. Access point wireless connections are not critical at this stage.
 
-![InitialTopology](pictures/DeviceConnections.png)
-
 ### Switch Port Assignments
 
 | Device        | Switch Port |
@@ -59,6 +57,8 @@ Place all devices and connect them to Switch1. Access point wireless connections
 | Access Point3 | Fa0/12      |
 | Printer3      | Fa0/13      |
 
+![Initial Topology](pictures\DeviceConnections.png)
+
 ---
 
 ## Step 2 – Setup Access Points for WiFi
@@ -74,6 +74,8 @@ For each access point: **Config → Port 1 → WPA2-PSK** → set SSID and passp
 | Customer Service| 3            | CS-WIFI | CSpassword |
 
 > For each access point: Config → Port 1 → set **WPA2-PSK** → enter SSID and passphrase.
+
+![Initial Topology](pictures\GroupedTopology.png)
 
 ---
 
@@ -151,8 +153,9 @@ Router1(config-if)#no shutdown
 Router1(config-if)#exit
 ```
 
-### b) Subinterface for VLAN 10 (IT)
+### b) Subinterface for each VLAN
 
+#### VLAN 10 (IT)
 ```
 Router1(config)#int f0/0.10
 Router1(config-subif)#encapsulation dot1Q 10
@@ -161,8 +164,7 @@ Router1(config-subif)#no shutdown
 Router1(config-subif)#exit
 ```
 
-### c) Subinterface for VLAN 20 (HR)
-
+#### VLAN 20 (HR)
 ```
 Router1(config)#int f0/0.20
 Router1(config-subif)#encapsulation dot1Q 20
@@ -171,8 +173,7 @@ Router1(config-subif)#no shutdown
 Router1(config-subif)#exit
 ```
 
-### d) Subinterface for VLAN 30 (Customer Service)
-
+#### VLAN 30 (CS)
 ```
 Router1(config)#int f0/0.30
 Router1(config-subif)#encapsulation dot1Q 30
@@ -181,7 +182,7 @@ Router1(config-subif)#no shutdown
 Router1(config-subif)#exit
 ```
 
-### e) Verify Router Interfaces
+### c) Verify Router Interfaces
 
 ```
 Router1(config)#do show ip int br
@@ -196,7 +197,7 @@ FastEthernet0/0.20   192.168.4.65    up      up
 FastEthernet0/0.30   192.168.4.129   up      up
 ```
 
-### f) Save Configuration
+### d) Save Configuration
 
 ```
 Router1#wr
@@ -205,6 +206,18 @@ Router1#wr
 ---
 
 ## Step 5 – DHCP Configuration
+
+Here we are going to configure the DHCP for each of the VLANs.
+
+```ip dhcp pool <Group Name>``` Creates a named DHCP pool called the inputted group name. This is just a label — it tells the router "I'm about to define rules for handing out IP addresses to a group of devices, and I'm calling this group the inputted name."
+
+```network <Network ID of the group> <Subnet mask>``` Defines the subnet this pool serves. The router now knows it can hand out addresses in the range of the groups available hosts to any device that requests one. The subnet mask tells it the boundaries of that range.
+
+```default-router <First host IP address in the group>``` Tells devices "your gateway is 192.168.4.XX." This is the subinterface IP you set on the router for each VLAN. When a device wants to send traffic outside its subnet (like to another VLAN), it sends it here first.
+
+```dns-server 192.168.4.1``` Points devices to a DNS server for name resolution. In this lab it's set to the same address as the gateway — in a real network this would typically be a dedicated DNS server, but pointing it at the router works fine for this setup.
+
+The following blocks are the commands I wrote for this labs network.
 
 ### VLAN 10 – IT
 
@@ -240,6 +253,17 @@ Router1(dhcp-config)#exit
 
 Click a PC → **Config → FastEthernet0 → set IP Configuration to DHCP**. Wait a few seconds — an IP address in the correct range should be assigned automatically.
 
+### Wired Connectivity — Ping Across VLANs
+
+From PC1 (VLAN 10), open Command Prompt and ping other wired devices:
+
+```
+ping 192.168.4.65    # VLAN 10 -> VLAN 20 (HR)
+ping 192.168.4.129   # VLAN 10 -> VLAN 30 (CS)
+```
+
+Both should succeed — this confirms inter-VLAN routing via Router1 is working. 
+
 ---
 
 ## Step 6 – Setup Wireless Devices
@@ -251,11 +275,26 @@ For each wireless device (smartphone, tablet, laptop):
 3. Enter the correct SSID and password for the department's access point
 4. A dashed line should appear connecting the device to the access point
 
+![WirelessWifi](pictures\WirelessWifi.png)
+
 > **Laptops only:** Laptops require a wireless NIC swap:
 > 1. Turn off power
+>
+> ![LaptopBeforeInterface](pictures\LaptopBeforeInterface.png)
+>
 > 2. Remove the existing wired interface
-> 3. Insert the wireless interface (e.g., Linksys-WMP300N)
+>
+> ![LaptopRemoveInterface](pictures\LaptopRemoveInterface.png)
+>
+> 3. Insert the wireless interface in the bottom right corner of previous image (e.g., Linksys-WMP300N)
 > 4. Turn power back on, then configure WiFi
+>
+> ![LaptopConnectWifi](pictures\LaptopConnectWifi.png)
+> ![LaptopPassword](pictures\LaptopPassword.png)
+
+The final topology should look like the following (notice dashed lines between wireless devices and access points):
+
+![Final Topology](pictures\FinalTopology.png)
 
 ---
 
@@ -272,9 +311,9 @@ ping 192.168.4.129   # VLAN 10 -> VLAN 30 (CS)
 
 Both should succeed — this confirms inter-VLAN routing via Router1 is working.
 
-### Wireless Connectivity
+### Wred and Wireless Connectivity
 
-Repeat the same pings from wireless devices to confirm they are reachable across VLANs.
+Pings from and to wireless devices to confirm they are reachable across VLANs. 
 
 ### Broadcast Isolation — Simulation Mode (ARP)
 
