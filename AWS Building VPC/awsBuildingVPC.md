@@ -13,6 +13,26 @@ A step-by-step walkthrough of building a Virtual Private Cloud (VPC) on AWS, wit
 > **Why use an IAM user instead of root?** The root account has unrestricted access to everything — including billing and account deletion. Best practice is to only use root for account-level tasks and do all day-to-day work from an IAM user. This limits the blast radius if credentials are ever compromised.
  
 3. **Switch to your closest AWS region** (top-right of the console). Choosing a nearby region reduces latency and keeps data residency predictable.
+
+---
+ 
+## Cleaning Up: Why You Should Delete Unused Resources
+ 
+Once you're done with this project, delete everything you created. This isn't optional housekeeping — it's an important habit to build early.
+ 
+AWS charges for resources whether you're actively using them or not. EC2 instances accrue hourly compute charges as long as they're running. NAT gateways (if you had created one) charge by the hour *plus* per GB of data processed. Elastic IPs that are allocated but not attached to a running instance also incur charges. None of these costs are large individually, but forgotten resources across multiple learning projects add up quickly and can lead to a surprising bill at the end of the month.
+ 
+Beyond cost, leaving unused resources around creates security exposure. An EC2 instance sitting idle is still a potential attack surface — especially if its security group allows inbound SSH from anywhere, as this project's public server does. There's no reason to leave that window open once the project is done.
+ 
+**Delete resources in this order** (dependencies must be removed before the things they depend on):
+ 
+1. **EC2 instances** — terminate both the public and private servers first.
+2. **NAT gateway** (if created) — must be deleted before the IGW and subnets.
+3. **Release Elastic IPs** (if any were allocated).
+4. **VPC** — deleting the VPC will automatically remove its subnets, route tables, internet gateway association, NACLs, and security groups in one step. Use the VPC console's delete action for the cleanest teardown.
+5. **Key pair** — delete it from the EC2 Key Pairs console, and delete the `.pem` file from your local machine if you no longer need it.
+> Getting into the habit of cleaning up after every learning project will save you money, keep your AWS console uncluttered, and make it easier to understand what's running in your account at any given time.
+
 ---
  
 ## Step 1: Create a VPC
@@ -444,3 +464,18 @@ After creation, head to the **VPC dashboard** and compare the resource map of yo
 | Public Subnet | VPC | — | Subnet with a route to the IGW |
 | Private Subnet | VPC | — | Subnet with no route to the IGW |
  
+---
+ 
+## What I Learned
+ 
+This project was a hands-on introduction to cloud networking on AWS — not just clicking through a console, but understanding *why* each component exists and how they work together. Here's what it covered:
+ 
+**Core AWS networking concepts.** Building a VPC from scratch meant working through the full network stack: defining an IP address space with CIDR blocks, creating subnets to segment that space, and configuring route tables to control where traffic flows. Setting up the internet gateway and wiring it to the route table made it clear that connectivity isn't automatic — it has to be explicitly constructed and connected at each layer.
+ 
+**Security layers: Security Groups vs. Network ACLs.** One of the most important lessons from this project is that AWS gives you *two* distinct layers of network security, and they work differently. Security groups operate at the instance level and are stateful — allow a connection in, and the response is automatically allowed out. Network ACLs operate at the subnet level and are stateless — every direction of traffic needs its own explicit rule. Seeing this distinction play out concretely (especially when the ping troubleshooting required both a NACL rule *and* a security group rule to be fixed) makes the difference much more intuitive than reading about it would.
+ 
+**Public vs. private architecture.** The project illustrated a foundational cloud networking pattern: a public-facing tier that accepts internet traffic, and a private tier that's isolated from the internet but reachable from the public tier. This architecture — sometimes called a bastion or jump host pattern — is the basis for how most production systems separate their web-facing components from their databases and internal services. Building it by hand, and then connecting to the private server by hopping through the public one, made the isolation tangible.
+ 
+**Hands-on troubleshooting skills.** The most valuable part of the project may have been the intentional errors. When EC2 Instance Connect failed, the fix wasn't handed over — the process was to systematically check the route table, then the NACL, then the security group, until the culprit was found (HTTP was allowed, but not SSH). The same process played out with the private server ping failure. Learning to diagnose network issues by working through the layers — routing first, then subnet firewall, then instance firewall — is a skill that applies directly to real-world cloud troubleshooting.
+ 
+**Cloud networking management.** Tying it all together, this project demonstrated how AWS organizes network management: resources are created and configured through the console (or "VPC and more" for speed), they exist within a region and availability zone hierarchy, and they're linked together through associations rather than physical cables. Understanding this mental model — and seeing how the resource map visualizes it — is the foundation for designing and managing more complex cloud architectures going forward.
